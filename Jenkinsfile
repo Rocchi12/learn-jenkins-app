@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    options {
-        timestamps()
-    }
-
     stages {
         stage('Build') {
             agent {
@@ -15,18 +11,14 @@ pipeline {
                 }
             }
             steps {
-                cleanWs()
-                checkout scm
                 sh '''
                     npm ci
                     npm run build
                 '''
-                sh 'chmod -R a+rwX build'
                 stash name: 'build-output', includes: 'build/**'
             }
         }
-
-        stage('Run Tests') {
+        stage('Run Tests'){
             parallel {
                 stage('Tests') {
                     agent {
@@ -37,8 +29,6 @@ pipeline {
                         }
                     }
                     steps {
-                        cleanWs()
-                        checkout scm
                         sh '''
                             npm ci
                             npm test -- --ci --reporters=default --reporters=jest-junit
@@ -46,11 +36,10 @@ pipeline {
                     }
                     post {
                         always {
-                            junit testResults: 'test-results/junit.xml', allowEmptyResults: true
+                            junit 'test-results/junit.xml'
                         }
                     }
                 }
-
                 stage('E2E') {
                     agent {
                         docker {
@@ -60,8 +49,6 @@ pipeline {
                         }
                     }
                     steps {
-                        cleanWs()
-                        checkout scm
                         unstash 'build-output'
                         sh '''
                             npm ci
@@ -70,11 +57,6 @@ pipeline {
                             npx wait-on http://localhost:3000
                             npx playwright test
                         '''
-                    }
-                    post {
-                        always {
-                            sh 'pkill -f "serve -s build" || true'
-                        }
                     }
                 }
             }
