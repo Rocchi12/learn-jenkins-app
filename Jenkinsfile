@@ -7,6 +7,7 @@ pipeline {
                 docker {
                     image 'node:18-alpine'
                     label 'linux'
+                    args '-u root:root'
                 }
             }
             steps {
@@ -24,6 +25,7 @@ pipeline {
                         docker {
                             image 'node:18-alpine'
                             label 'linux'
+                            args '-u root:root'
                         }
                     }
                     steps {
