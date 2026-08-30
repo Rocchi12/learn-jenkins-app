@@ -1,4 +1,4 @@
-pipeline {
+=pipeline {
     agent any
 
     stages {
@@ -14,19 +14,20 @@ pipeline {
                     npm ci
                     npm run build
                 '''
+                stash name: 'build-output', includes: 'build/**'
             }
         }
-        stage('Tests'){
+        stage('Tests') {
             agent {
                 docker {
                     image 'node:18-alpine'
                     label 'linux'
-            }
+                }
             }
             steps {
                 sh '''
                     npm ci
-                    npm test
+                    npm test -- --ci --reporters=default --reporters=jest-junit
                 '''
             }
             post {
@@ -35,20 +36,21 @@ pipeline {
                 }
             }
         }
-        stage('E2E'){
+        stage('E2E') {
             agent {
                 docker {
-                    image 'node:18-alpine'
                     image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                     label 'linux'
                     args '-u root:root'
                 }
             }
             steps {
+                unstash 'build-output'
                 sh '''
                     npm ci
-                    npm i serve
-                    node_modules/.bin/serve -s build & sleep 10
+                    npm i serve wait-on
+                    node_modules/.bin/serve -s build &
+                    npx wait-on http://localhost:3000
                     npx playwright test
                 '''
             }
