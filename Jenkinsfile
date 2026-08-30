@@ -49,7 +49,6 @@ pipeline {
                         }
                     }
                     steps {
-                        deleteDir()
                         unstash 'build-output'
                         sh '''
                             npm ci
