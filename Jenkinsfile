@@ -15,6 +15,7 @@ pipeline {
                     npm ci
                     npm run build
                 '''
+                sh 'chmod -R a+rwX build'
                 stash name: 'build-output', includes: 'build/**'
             }
         }
