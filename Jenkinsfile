@@ -7,7 +7,7 @@ pipeline {
                 docker {
                     image 'node:18-alpine'
                     label 'linux'
-                    args '-u root:root'
+                    args '-u 1000:1000'
                 }
             }
             steps {
@@ -15,7 +15,6 @@ pipeline {
                     npm ci
                     npm run build
                 '''
-                sh 'chmod -R a+rwX build'
                 stash name: 'build-output', includes: 'build/**'
             }
         }
@@ -26,7 +25,7 @@ pipeline {
                         docker {
                             image 'node:18-alpine'
                             label 'linux'
-                            args '-u root:root'
+                            args '-u 1000:1000'
                         }
                     }
                     steps {
@@ -46,6 +45,7 @@ pipeline {
                         docker {
                             image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                             label 'linux'
+                            args '-u 1000:1000'
                         }
                     }
                     steps {
