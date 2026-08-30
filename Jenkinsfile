@@ -12,7 +12,6 @@ pipeline {
                     image 'node:18-alpine'
                     label 'linux'
                     args '-u root:root'
-                    reuseNode true
                 }
             }
             steps {
@@ -22,7 +21,6 @@ pipeline {
                     npm ci
                     npm run build
                 '''
-                // Ensure stashed files are readable/writable by any UID that unstashes them
                 sh 'chmod -R a+rwX build'
                 stash name: 'build-output', includes: 'build/**'
             }
@@ -39,6 +37,8 @@ pipeline {
                         }
                     }
                     steps {
+                        cleanWs()
+                        checkout scm
                         sh '''
                             npm ci
                             npm test -- --ci --reporters=default --reporters=jest-junit
