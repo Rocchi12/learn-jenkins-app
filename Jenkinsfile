@@ -35,5 +35,22 @@ pipeline {
                 }
             }
         }
+        stage('E2E'){
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/playwright:1.39.0-jammy'
+                    label 'linux'
+                    args '-u root:root'
+                }
+            }
+            steps {
+                sh '''
+                    npm ci
+                    npm i serve
+                    node_modules/.bin/serve -s build & sleep 10
+                    npx playwright test
+                '''
+            }
+        }
     }
 }
