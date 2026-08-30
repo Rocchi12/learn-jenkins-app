@@ -17,42 +17,46 @@ pipeline {
                 stash name: 'build-output', includes: 'build/**'
             }
         }
-        stage('Tests') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    label 'linux'
+        stage('Run Tests'){
+            parallel {
+                stage('Tests') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            label 'linux'
+                        }
+                    }
+                    steps {
+                        sh '''
+                            npm ci
+                            npm test -- --ci --reporters=default --reporters=jest-junit
+                        '''
+                    }
+                    post {
+                        always {
+                            junit 'test-results/junit.xml'
+                        }
+                    }
                 }
-            }
-            steps {
-                sh '''
-                    npm ci
-                    npm test -- --ci --reporters=default --reporters=jest-junit
-                '''
-            }
-            post {
-                always {
-                    junit 'test-results/junit.xml'
+                stage('E2E') {
+                    agent {
+                        docker {
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            label 'linux'
+                            args '-u root:root'
+                        }
+                    }
+                    steps {
+                        unstash 'build-output'
+                        sh '''
+                            npm ci
+                            npm i serve wait-on
+                            node_modules/.bin/serve -s build &
+                            npx wait-on http://localhost:3000
+                            npx playwright test
+                        '''
+                    }
                 }
-            }
-        }
-        stage('E2E') {
-            agent {
-                docker {
-                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
-                    label 'linux'
-                    args '-u root:root'
-                }
-            }
-            steps {
-                unstash 'build-output'
-                sh '''
-                    npm ci
-                    npm i serve wait-on
-                    node_modules/.bin/serve -s build &
-                    npx wait-on http://localhost:3000
-                    npx playwright test
-                '''
             }
         }
     }
