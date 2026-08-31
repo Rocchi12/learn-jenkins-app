@@ -75,9 +75,10 @@ pipeline {
             steps {
                 unstash 'build-output'
                 sh '''
-                    npm install netlify-cli@20.1.1
+                    npm install netlify-cli@20.1.1 node-jq
                     node_modules/.bin/netlify status
-                    node_modules/.bin/netlify deploy --dir=build --prod
+                    node_modules/.bin/netlify deploy --dir=build --prod --json > deploy-output.json
+                    node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json
                 '''
             }
         }
