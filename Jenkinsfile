@@ -57,8 +57,9 @@ pipeline {
                 sh '''
                     npm ci
                     npm run build
+
+                    npm install netlify-cli
                     node_modules/.bin/netlify-cli --version
-                    netlify --version
                 '''
                 stash name: 'build-output', includes: 'build/**'
             }
