@@ -2,6 +2,22 @@ pipeline {
     agent any
 
     stages {
+        stage('Build') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    label 'linux'
+                    args '-u 1000:1000'
+                }
+            }
+            steps {
+                sh '''
+                    npm ci
+                    npm run build
+                '''
+                stash name: 'build-output', includes: 'build/**'
+            }
+        }
         stage('Run Tests'){
             parallel {
                 stage('Tests') {
@@ -54,14 +70,11 @@ pipeline {
                 }
             }
             steps {
+                unstash 'build-output'
                 sh '''
-                    npm ci
-                    npm run build
-
                     npm install netlify-cli
                     node_modules/.bin/netlify-cli --version
                 '''
-                stash name: 'build-output', includes: 'build/**'
             }
         }
     }
